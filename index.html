@@ -1,0 +1,158 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 4px solid #00ffcc;
+      background: #222;
+      max-width: 90vw;
+      max-height: 90vh;
+      touch-action: none;
+    }
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #00ffcc;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .control-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .control-buttons button {
+      margin: 0 10px;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snake Game</h1>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div class="controls">
+    <div>Score: <span id="score">0</span></div>
+    <div>High Score: <span id="highScore">0</span></div>
+    <div>Speed: <span id="speed">Normal</span></div>
+    <button onclick="resetGame()">Restart</button>
+  </div>
+  <div class="control-buttons">
+<div class="control-buttons">
+  <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
+    <button onclick="changeDirection(0, -1)">↑</button>
+    <button onclick="changeDirection(0, 1)">↓</button>
+  </div>
+  <div style="display: flex; justify-content: center; gap: 10px;">
+    <button onclick="changeDirection(-1, 0)">←</button>
+    <button onclick="changeDirection(1, 0)">→</button>
+  </div>
+</div></button>
+  </div>  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const highScoreEl = document.getElementById("highScore");
+    const speedEl = document.getElementById("speed");
+
+    const gridSize = 20;
+    let snake = [{x: 10, y: 10}];
+    let direction = {x: 0, y: 0};
+    let food = {x: 15, y: 15};
+    let score = 0;
+    let speed = 500;
+    let gameInterval;
+    let highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
+    highScoreEl.textContent = highScore;
+
+    const eatSound = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
+    const gameOverSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+
+    function resetGame() {
+      clearInterval(gameInterval);
+      snake = [{x: 10, y: 10}];
+      direction = {x: 0, y: 0};
+      food = {x: Math.floor(Math.random() * 20), y: Math.floor(Math.random() * 20)};
+      score = 0;
+      speed = 500;
+      scoreEl.textContent = score;
+      speedEl.textContent = "Normal";
+      startGameLoop();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#222';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#0f0';
+      for (const s of snake) {
+        ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize - 2, gridSize - 2);
+      }
+
+      ctx.fillStyle = 'red';
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    }
+
+    function update() {
+      const head = {...snake[0]};
+      head.x += direction.x;
+      head.y += direction.y;
+
+      if (head.x < 0 || head.y < 0 || head.x >= canvas.width / gridSize || head.y >= canvas.height / gridSize || snake.some(p => p.x === head.x && p.y === head.y)) {
+        gameOverSound.play();
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('snakeHighScore', highScore);
+          highScoreEl.textContent = highScore;
+        }
+        resetGame();
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        scoreEl.textContent = score;
+        eatSound.play();
+        food = {x: Math.floor(Math.random() * 20), y: Math.floor(Math.random() * 20)};
+      } else {
+        snake.pop();
+      }
+    }
+
+    function changeDirection(x, y) {
+      if (direction.x === -x && direction.y === -y) return; // Prevent reverse direction
+      direction = {x, y};
+    }
+
+    function startGameLoop() {
+      clearInterval(gameInterval);
+      gameInterval = setInterval(() => {
+        update();
+        draw();
+      }, speed);
+    }
+
+    resetGame();
+  </script></body>
+</html>
